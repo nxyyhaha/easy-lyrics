@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Song {
+  id          String          @id @default(cuid())
+  title       String
+  artist      String
+  album       String?
+  durationSec Int?
+  artUrl      String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  versions    LyricsVersion[]
+  submissions Submission[]
+
+  @@unique([title, artist])
+  @@index([artist])
+}
+
+enum VersionStatus {
+  approved
+  auto
+  pending
+}
+
+model LyricsVersion {
+  id           String        @id @default(cuid())
+  songId       String
+  song         Song          @relation(fields: [songId], references: [id], onDelete: Cascade)
+  plainLyrics  String?
+  syncedLyrics String?
+  instrumental Boolean       @default(false)
+  source       String
+  sourceUrl    String?
+  status       VersionStatus @default(approved)
+  createdBy    String?
+  createdAt    DateTime      @default(now())
+
+  @@index([songId, status])
+}
+
+enum SubmissionStatus {
+  pending
+  approved
+  rejected
+}
+
+model Submission {
+  id           String           @id @default(cuid())
+  songId       String?
+  song         Song?            @relation(fields: [songId], references: [id], onDelete: SetNull)
+  title        String
+  artist       String
+  plainLyrics  String?
+  syncedLyrics String?
+  type         String           @default("correction")
+  status       SubmissionStatus @default(pending)
+  submitter    String?
+  reason       String?
+  createdAt    DateTime         @default(now())
+
+  @@index([status, createdAt])
+}
+
+model ModerationLog {
+  id           String   @id @default(cuid())
+  submissionId String
+  action       String
+  moderator    String?
+  note         String?
+  createdAt    DateTime @default(now())
+}
