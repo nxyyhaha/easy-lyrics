@@ -24,7 +24,7 @@ const ENDPOINTS = [
   {
     method: "POST",
     path: "/api/submit  { title, artist, plainLyrics?, syncedLyrics? }",
-    body: "Send a correction or a missing song. syncedLyrics must hold [mm:ss.xx] lines. An admin approves it before it goes live.",
+    body: "Send a correction or a missing song. Requires a User-Agent header like nxyy (https://nxyy.codes). syncedLyrics must hold [mm:ss.xx] lines. An admin approves it before it goes live.",
   },
 ];
 

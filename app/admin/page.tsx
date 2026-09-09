@@ -32,13 +32,26 @@ export default function Admin() {
   async function load(e?: React.FormEvent) {
     e?.preventDefault();
     setMsg("Loading…");
-    const r = await fetch("/api/moderate", {
-      headers: { "x-admin-key": key },
-    });
-    const j = await r.json();
-    if (!r.ok) {
+    let r: Response;
+    try {
+      r = await fetch("/api/moderate", {
+        headers: { "x-admin-key": key },
+      });
+    } catch {
       setSubs([]);
-      setMsg(j.error ?? "Access denied. Wrong key?");
+      setMsg("No response. Is the dev server running?");
+      return;
+    }
+    const j = (await r.json().catch(() => null)) as {
+      error?: string;
+      submissions?: Sub[];
+    } | null;
+    if (!r.ok || !j || !Array.isArray(j.submissions)) {
+      setSubs([]);
+      setMsg(
+        j?.error ??
+          `Server error (${r.status}). Check the terminal running next dev.`,
+      );
       return;
     }
     setSubs(j.submissions);
@@ -51,11 +64,21 @@ export default function Admin() {
 
   async function act(id: string, action: "approve" | "reject") {
     setBusy(id + action);
-    await fetch("/api/moderate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-admin-key": key },
-      body: JSON.stringify({ id, action }),
-    });
+    try {
+      const r = await fetch("/api/moderate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": key },
+        body: JSON.stringify({ id, action }),
+      });
+      if (!r.ok) {
+        const j = (await r.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        setMsg(j?.error ?? `Action failed (${r.status}). Try again.`);
+      }
+    } catch {
+      setMsg("No response. Is the dev server running?");
+    }
     setBusy("");
     await load();
   }

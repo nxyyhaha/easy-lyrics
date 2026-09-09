@@ -15,7 +15,20 @@ const Body = z.object({
   message: "Provide plainLyrics and/or syncedLyrics",
 });
 
+// Submitters must identify themselves, e.g. "nxyy (https://nxyy.codes)".
+const USER_AGENT = /^.{1,100}?\(https?:\/\/[^()\s]+\)\s*$/;
+
 export async function POST(req: Request) {
+  const ua = req.headers.get("user-agent") ?? "";
+  if (!USER_AGENT.test(ua)) {
+    return NextResponse.json(
+      {
+        error:
+          'Missing or invalid User-Agent. Send one like "nxyy (https://nxyy.codes)".',
+      },
+      { status: 400 },
+    );
+  }
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   const rl = await checkRateLimit(`submit:${ip}`);
