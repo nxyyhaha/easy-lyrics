@@ -21,6 +21,7 @@ interface Sub {
   syncedLyrics: string | null;
   type: string;
   reason: string | null;
+  submitter: string | null;
 }
 
 export default function Admin() {
@@ -128,6 +129,9 @@ export default function Admin() {
                 {s.artist} — {s.title}
               </h2>
               <Badge>{s.type}</Badge>
+              {s.submitter && (
+                <Badge variant="plain">from {s.submitter}</Badge>
+              )}
               {s.syncedLyrics && (
                 <Badge variant="accent">
                   <TimerIcon className="size-3" /> synced

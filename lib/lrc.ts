@@ -35,3 +35,39 @@ export function stripLrcToPlain(synced: string): string {
 export function isInstrumentalText(plain: string): boolean {
   return /^\s*\[?\s*instrumental\s*\]?\s*$/i.test(plain.trim());
 }
+
+/** A lyrics line being edited: text plus its timestamp in centiseconds. */
+export interface TimedLine {
+  text: string;
+  cs: number | null;
+}
+
+/** Parse one line of plain or LRC text into text + timestamp (centiseconds). */
+export function parseLrcLine(raw: string): TimedLine {
+  const m = raw.match(LRC_LINE);
+  if (!m) return { text: raw.trim(), cs: null };
+  const frac = m[3] ?? "";
+  const cs =
+    frac.length <= 1
+      ? Number(frac || "0") * 10
+      : frac.length === 2
+        ? Number(frac)
+        : Math.floor(Number(frac) / 10);
+  return { text: m[4].trim(), cs: Number(m[1]) * 6000 + Number(m[2]) * 100 + cs };
+}
+
+/** Format centiseconds as an LRC timestamp, e.g. 7450 -> "01:14.50". */
+export function csToLrcTimestamp(cs: number): string {
+  const total = Math.max(0, Math.round(cs));
+  const mm = Math.floor(total / 6000);
+  const ss = Math.floor((total % 6000) / 100);
+  const cc = total % 100;
+  return `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}.${String(cc).padStart(2, "0")}`;
+}
+
+/** Build LRC text from edited lines. Untimed lines are kept as plain text. */
+export function buildLrcFromLines(lines: TimedLine[]): string {
+  return lines
+    .map((l) => (l.cs != null ? `[${csToLrcTimestamp(l.cs)}] ${l.text}` : l.text))
+    .join("\n");
+}

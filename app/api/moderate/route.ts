@@ -28,8 +28,14 @@ export async function GET(req: Request) {
     where: { status: "pending" },
     orderBy: { createdAt: "asc" },
     take: 50,
+    include: { user: { select: { name: true, email: true } } },
   });
-  return NextResponse.json({ submissions: subs });
+  return NextResponse.json({
+    submissions: subs.map(({ user, ...s }) => ({
+      ...s,
+      submitter: s.submitter ?? user?.name ?? user?.email ?? null,
+    })),
+  });
 }
 
 export async function POST(req: Request) {
@@ -76,7 +82,7 @@ export async function POST(req: Request) {
         instrumental: false,
         source: "community",
         status: "approved",
-        createdBy: sub.submitter,
+        createdBy: sub.userId ?? sub.submitter,
       },
     }),
     prisma.submission.update({

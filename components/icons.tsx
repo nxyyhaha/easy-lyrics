@@ -120,6 +120,41 @@ export function DbIcon(props: P) {
   );
 }
 
+export function CloudIcon(props: P) {
+  return (
+    <Svg {...props}>
+      <path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6.5 6.5 0 0 0 5.34 9.5 4 4 0 0 0 6 17.5z" />
+      <path d="m10.5 13.5 4-2.5-4-2.5z" />
+    </Svg>
+  );
+}
+
+export function PlayIcon(props: P) {
+  return (
+    <Svg {...props}>
+      <path d="M6 4.5v15l13-7.5z" />
+    </Svg>
+  );
+}
+
+export function PauseIcon(props: P) {
+  return (
+    <Svg {...props}>
+      <rect x="6" y="4" width="4" height="16" rx="1" />
+      <rect x="14" y="4" width="4" height="16" rx="1" />
+    </Svg>
+  );
+}
+
+export function PencilIcon(props: P) {
+  return (
+    <Svg {...props}>
+      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+      <path d="m15 5 4 4" />
+    </Svg>
+  );
+}
+
 export function ArrowIcon(props: P) {
   return (
     <Svg {...props}>

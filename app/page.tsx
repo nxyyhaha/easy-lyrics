@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Page } from "@/components/chrome";
 import { Badge, Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,29 +11,10 @@ import {
   CopyIcon,
   LoaderIcon,
   SearchIcon,
-  TerminalIcon,
   TimerIcon,
   XIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
-
-const ALL_SOURCES = [
-  "own",
-  "lrclib",
-  "megalobiz",
-  "netease",
-  "tencent",
-  "lrc.cx",
-  "musixmatch",
-  "lyrics.ovh",
-];
-
-interface Attempt {
-  source: string;
-  ok: boolean;
-  latencyMs: number;
-  error?: string;
-}
 
 interface LookupResult {
   title: string;
@@ -44,7 +26,6 @@ interface LookupResult {
   sourceUrl?: string;
   artUrl?: string;
   durationSec?: number;
-  sourcesTried: Attempt[];
 }
 
 type Tab = "lyrics" | "synced" | "raw";
@@ -59,8 +40,6 @@ function parseLrc(synced: string): { t: string; line: string }[] {
 export default function Home() {
   const [title, setTitle] = useState("Beautiful");
   const [artist, setArtist] = useState("Eminem");
-  const [duration, setDuration] = useState("");
-  const [sources, setSources] = useState<string[]>([...ALL_SOURCES]);
   const [syncedOnly, setSyncedOnly] = useState(false);
   const [tab, setTab] = useState<Tab>("lyrics");
   const [data, setData] = useState<LookupResult | null>(null);
@@ -68,25 +47,13 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  function toggle(s: string) {
-    setSources((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
-    );
-  }
-
   async function lookup(e?: React.FormEvent) {
     e?.preventDefault();
     setLoading(true);
     setErr("");
     setCopied(false);
     try {
-      const p = new URLSearchParams({
-        title,
-        artist,
-        sources: sources.join(","),
-        debug: "true",
-      });
-      if (duration) p.set("duration", duration);
+      const p = new URLSearchParams({ title, artist });
       if (syncedOnly) p.set("syncedOnly", "true");
       const r = await fetch(`/api/lyrics?${p}`);
       const j = await r.json();
@@ -115,10 +82,6 @@ export default function Home() {
     }
   }
 
-  const maxLatency = Math.max(
-    1,
-    ...(data?.sourcesTried.map((a) => a.latencyMs) ?? [1]),
-  );
   const tabText =
     tab === "raw"
       ? JSON.stringify(data, null, 2)
@@ -133,14 +96,14 @@ export default function Home() {
           Find the lyrics.
         </h1>
         <p className="max-w-xl text-fog">
-          One query checks every source and returns plain lyrics plus synced
-          LRC with the source named.
+          Plain lyrics plus synced LRC, served straight from the catalogue the
+          community maintains — one database, no upstream calls.
         </p>
       </section>
 
       <Card className="p-4 sm:p-5">
         <form onSubmit={lookup} className="flex flex-col gap-4">
-          <div className="grid gap-3 sm:grid-cols-[1fr_1fr_140px]">
+          <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Title">
               <Input
                 value={title}
@@ -155,37 +118,6 @@ export default function Home() {
                 placeholder="Eminem"
               />
             </Field>
-            <Field label="Seconds">
-              <Input
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                placeholder="404"
-                inputMode="numeric"
-                className="font-mono"
-              />
-            </Field>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1.5">
-            {ALL_SOURCES.map((s) => {
-              const on = sources.includes(s);
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => toggle(s)}
-                  aria-pressed={on}
-                  className={cn(
-                    "cursor-pointer rounded-full border px-3 py-1 font-mono text-xs transition-colors duration-200",
-                    on
-                      ? "border-mint/60 bg-mint/10 text-mint"
-                      : "border-edge text-fog hover:text-paper",
-                  )}
-                >
-                  {s}
-                </button>
-              );
-            })}
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
@@ -225,7 +157,11 @@ export default function Home() {
           <p className="text-sm">
             <b>{err}.</b>{" "}
             <span className="text-fog">
-              Check the spelling, add a duration, or try fewer sources.
+              Check the spelling — or{" "}
+              <Link href="/contribute" className="text-mint hover:underline">
+                add it to the catalogue
+              </Link>
+              .
             </span>
           </p>
         </Card>
@@ -320,44 +256,6 @@ export default function Home() {
             </div>
           </Card>
 
-          <details className="group rounded-xl border border-edge bg-panel" open>
-            <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm text-fog transition-colors hover:text-paper [&::-webkit-details-marker]:hidden">
-              <TerminalIcon className="size-4" />
-              Sources
-              <span className="font-mono text-xs">
-                {data.sourcesTried.filter((a) => a.ok).length}/
-                {data.sourcesTried.length}
-              </span>
-            </summary>
-            <ul className="flex flex-col gap-1.5 border-t border-edge px-4 py-3">
-              {data.sourcesTried.map((a) => (
-                <li key={a.source} className="flex items-center gap-2.5 text-sm">
-                  {a.ok ? (
-                    <CheckIcon className="size-3.5 shrink-0 text-mint" />
-                  ) : (
-                    <XIcon className="size-3.5 shrink-0 text-fog/50" />
-                  )}
-                  <span className="w-24 shrink-0 font-mono text-xs text-fog">
-                    {a.source}
-                  </span>
-                  <span className="h-1 flex-1 overflow-hidden rounded-full bg-raised">
-                    <span
-                      className={cn(
-                        "block h-full rounded-full",
-                        a.ok ? "bg-mint" : "bg-edge",
-                      )}
-                      style={{
-                        width: `${Math.max(4, (a.latencyMs / maxLatency) * 100)}%`,
-                      }}
-                    />
-                  </span>
-                  <span className="w-16 shrink-0 text-right font-mono text-xs text-fog">
-                    {a.latencyMs}ms
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </details>
         </section>
       )}
     </Page>

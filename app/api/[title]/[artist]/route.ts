@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { orchestrate } from "@/lib/providers/orchestrator";
-import { cacheGet, cacheSet, cacheKeys } from "@/lib/cache";
+import { lookupLyrics } from "@/lib/songs";
 import { checkRateLimit } from "@/lib/ratelimit";
 
 // Lyrist-compat: GET /api/:title/:artist -> { lyrics, title, artist, image?, source }
@@ -20,32 +19,21 @@ export async function GET(
   if (!t || !a) {
     return NextResponse.json({ error: "Missing title/artist" }, { status: 400 });
   }
-  const cacheKey = cacheKeys.lyrics(a, t);
-  const cached = await cacheGet(cacheKey);
-  if (cached) {
-    const j = JSON.parse(cached);
-    return NextResponse.json(toCompat(j));
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json(
+      { error: "Lyrics unavailable (no database configured)" },
+      { status: 503 },
+    );
   }
-  const r = await orchestrate({ title: t, artist: a });
+  const r = await lookupLyrics({ title: t, artist: a });
   if (!r?.plainLyrics) {
     return NextResponse.json({ error: "Lyrics not found" }, { status: 404 });
   }
-  await cacheSet(cacheKey, JSON.stringify(r), 24 * 3600);
-  return NextResponse.json(toCompat(r));
-}
-
-function toCompat(r: {
-  title: string;
-  artist: string;
-  plainLyrics: string | null;
-  artUrl?: string;
-  source: string;
-}) {
-  return {
+  return NextResponse.json({
     lyrics: r.plainLyrics,
     title: r.title,
     artist: r.artist,
     image: r.artUrl ?? null,
     source: r.source,
-  };
+  });
 }

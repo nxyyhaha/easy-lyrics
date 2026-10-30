@@ -13,66 +13,56 @@ const ENDPOINTS = [
   },
   {
     method: "GET",
-    path: "/api/lyrics?title=&artist=&album=&duration=&sources=&syncedOnly=",
-    body: "Full lookup. sources takes own, lrclib, megalobiz, netease, tencent, lrc.cx, musixmatch, lyrics.ovh. Pass duration in seconds for exact synced matches. Add debug=true to see every source attempt with latency.",
+    path: "/api/lyrics?title=&artist=&syncedOnly=",
+    body: "Lookup against the catalogue. Returns plain lyrics plus synced LRC when we hold them. syncedOnly=1 answers 404 unless a timestamped version exists.",
   },
   {
     method: "GET",
     path: "/api/search?q=",
-    body: "Track suggestions across sources. Returns up to ten matches.",
+    body: "Search the catalogue itself. Returns up to ten tracks we actually hold lyrics for.",
   },
   {
     method: "POST",
-    path: "/api/submit  { title, artist, plainLyrics?, syncedLyrics? }",
-    body: "Send a correction or a missing song. Requires a User-Agent header like nxyy (https://nxyy.codes). syncedLyrics must hold [mm:ss.xx] lines. An admin approves it before it goes live.",
+    path: "/api/submit  { title, artist, plainLyrics?, syncedLyrics?, type?, reason? }",
+    body: "Contribute a new song, a correction or a sync fix. Requires a session cookie from /api/auth (create an account on /contribute). syncedLyrics must hold [mm:ss.xx] lines. An admin approves it before it goes live.",
+  },
+  {
+    method: "GET",
+    path: "/api/submit",
+    body: "Your last twenty submissions and their review status. Same session cookie as POST.",
   },
 ];
 
 const SOURCES = [
   {
-    name: "LRCLIB",
-    url: "https://lrclib.net",
-    body: "Free synced + plain lyrics, no key. Primary upstream source and seed for the community database.",
+    name: "The catalogue",
+    url: "https://github.com/nxyyhaha/easy-lyrics",
+    body: "One database. Every lookup and search reads only from it — nothing is fetched from another lyrics API at request time.",
   },
   {
-    name: "Megalobiz",
-    url: "https://www.megalobiz.com",
-    body: "Community LRC archive. Queried live for synced lyrics.",
+    name: "Contributors",
+    url: "/contribute",
+    body: "Signed-in accounts add songs and corrections through POST /api/submit. The session identifies who sent it, and a SoundCloud-powered editor stamps LRC timestamps while the track plays.",
   },
   {
-    name: "NetEase Cloud Music",
-    url: "https://music.163.com",
-    body: "Search + lyric endpoints. Queried live for synced lyrics.",
-  },
-  {
-    name: "Tencent QQ Music",
-    url: "https://y.qq.com",
-    body: "Search + lyric endpoints. Queried live for synced lyrics.",
-  },
-  {
-    name: "lrc.cx",
-    url: "https://lrc.cx",
-    body: "Legacy LRC search API. Queried live for synced lyrics.",
-  },
-  {
-    name: "Musixmatch",
-    url: "https://www.musixmatch.com",
-    body: "Licensed API. Only used with your own token. Their terms apply.",
-  },
-  {
-    name: "lyrics.ovh",
-    url: "https://lyrics.ovh",
-    body: "Free plain-lyrics API. Last-resort fallback.",
+    name: "Review queue",
+    url: "/admin",
+    body: "An admin approves or rejects each submission. Approved versions become the live catalogue, attributed to the contributor.",
   },
   {
     name: "syncedlyrics",
     url: "https://github.com/moehmeni/syncedlyrics",
-    body: "MIT library. NetEase / Tencent search + LRC logic ported to TypeScript.",
+    body: "MIT library. Its LRC parsing and normalization logic is ported into lib/lrc.ts.",
   },
   {
     name: "Lyrist",
     url: "https://github.com/asrvd/lyrist",
     body: "MIT project. API-shape inspiration for the compatible endpoint.",
+  },
+  {
+    name: "LRCLIB",
+    url: "https://lrclib.net",
+    body: "Open lyrics database with published dumps — a convenient seed for a fresh catalogue when you bootstrap your own instance.",
   },
 ];
 
@@ -87,8 +77,9 @@ export default function Guide() {
           Call it like this.
         </h1>
         <p className="max-w-xl text-fog">
-          Four endpoints. No keys, no signup. Responses carry source and
-          sourceUrl so credit lands where it belongs.
+          Reads are open — no keys, no signup. Contributing needs an account.
+          Responses carry source and sourceUrl so credit lands where it
+          belongs.
         </p>
       </section>
 
@@ -117,23 +108,34 @@ export default function Guide() {
 
       <section id="sources" className="flex scroll-mt-6 flex-col gap-3">
         <h2 className="font-display text-xl font-bold tracking-tight">
-          Sources
+          Where lyrics come from
         </h2>
         <p className="max-w-xl text-sm text-fog">
-          Lyrics belong to their publishers and songwriters. Every response
-          carries source and sourceUrl so credit travels with the data.
+          They come from us: a single catalogue that the API serves and the
+          community writes to. Nothing polls upstream at request time, and
+          every response still carries source and sourceUrl so credit travels
+          with the data.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           {SOURCES.map((s) => (
             <Card key={s.name} className="p-4">
-              <a
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-mono text-[13px] font-bold text-mint hover:underline"
-              >
-                {s.name}
-              </a>
+              {s.url.startsWith("/") ? (
+                <Link
+                  href={s.url}
+                  className="font-mono text-[13px] font-bold text-mint hover:underline"
+                >
+                  {s.name}
+                </Link>
+              ) : (
+                <a
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-[13px] font-bold text-mint hover:underline"
+                >
+                  {s.name}
+                </a>
+              )}
               <p className="mt-1.5 text-sm leading-relaxed text-fog">
                 {s.body}
               </p>

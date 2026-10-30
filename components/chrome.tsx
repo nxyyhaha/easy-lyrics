@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { BookIcon, MusicIcon } from "@/components/icons";
+import { BookIcon, MusicIcon, PencilIcon } from "@/components/icons";
 
 export function Nav() {
   return (
@@ -14,6 +14,13 @@ export function Nav() {
         </span>
       </Link>
       <nav className="flex items-center gap-1 text-sm">
+        <Link
+          href="/contribute"
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-fog transition-colors duration-200 hover:bg-raised hover:text-paper"
+        >
+          <PencilIcon className="size-4" />
+          Contribute
+        </Link>
         <Link
           href="/guide"
           className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-fog transition-colors duration-200 hover:bg-raised hover:text-paper"

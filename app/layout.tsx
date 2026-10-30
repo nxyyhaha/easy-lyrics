@@ -20,7 +20,7 @@ const code = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "easy-lyrics — every lyric, every timestamp, one call",
   description:
-    "Open-source multi-source lyrics API. Plain lyrics plus synced LRC from eight sources.",
+    "Open-source lyrics API with a community-maintained catalogue. Plain lyrics plus synced LRC, served from one database.",
   themeColor: "#0a0f1c",
 };
 

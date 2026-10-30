@@ -1,46 +1,23 @@
 easy-lyrics third-party attributions
 =====================================
 
-easy-lyrics aggregates lyrics from the sources below. Lyrics belong to
-their publishers and songwriters; every API response carries `source`
-and `sourceUrl` so credit travels with the data.
+easy-lyrics serves lyrics from its own catalogue: one database that
+contributors write to through signed-in accounts and an admin reviews. No
+external lyrics service is queried at request time. Lyrics belong to their
+publishers and songwriters; every API response carries `source` and
+`sourceUrl` so credit travels with the data.
 
-Lyric sources
--------------
-
-- LRCLIB (MIT) — https://lrclib.net
-  Free synced + plain lyrics API, no key required. Primary upstream
-  source and seed for the community database (db-dumps).
-
-- lyrics.ovh — https://lyrics.ovh
-  Free plain-lyrics API. Used as the last-resort fallback.
-
-- Megalobiz — https://www.megalobiz.com
-  Community LRC (synced lyrics) archive. Queried live at request time.
-
-- NetEase Cloud Music — https://music.163.com
-  Search + lyric endpoints. Queried live at request time.
-
-- Tencent QQ Music — https://y.qq.com
-  Search + lyric endpoints. Queried live at request time.
-
-- lrc.cx — https://lrc.cx
-  Legacy LRC search API. Queried live at request time.
-
-- Musixmatch — https://www.musixmatch.com
-  Licensed lyrics API. Optional, only used when you provide your own
-  MUSIXMATCH_TOKEN. Their terms apply.
+When bootstrapping a fresh instance, open databases such as LRCLIB
+(https://lrclib.net) publish dumps that make convenient seed data; their
+licenses and terms apply to whatever you import.
 
 Code & design references
 ------------------------
 
 - syncedlyrics by moehmeni (MIT)
   https://github.com/moehmeni/syncedlyrics
-  NetEase / Tencent-QQ search+lyric flow and LRC handling ported to
-  TypeScript in lib/providers/netease.ts and lib/providers/tencent.ts.
+  LRC parsing and normalization ported to TypeScript in lib/lrc.ts.
   Original MIT license text applies to those portions.
-
-- syncedlyrics_aio (MIT) — async Tencent provider reference.
 
 - Lyrist by asrvd (MIT) — https://github.com/asrvd/lyrist
   API-shape inspiration for the Lyrist-compatible
